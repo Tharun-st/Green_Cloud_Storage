@@ -38,7 +38,7 @@ def init_database():
             print("   Email: admin@greencloud.local")
             print("   Password: admin123")
         else:
-            print("\n⚠️  Admin user already exists!")
+            print("\nAdmin user already exists!")
         
         # Create demo user
         demo = User.query.filter_by(email='demo@greencloud.local').first()
@@ -59,9 +59,15 @@ def init_database():
             print("   Email: demo@greencloud.local")
             print("   Password: demo123")
         else:
-            print("⚠️  Demo user already exists!")
+            print("Demo user already exists!")
         
-        print("\nGreenCloud database is ready!")
+        print("\n========================================")
+        print("GreenCloud database is ready!")
+        print("========================================")
+        print("\nLogin with:")
+        print("  Admin: admin@greencloud.local / admin123")
+        print("  Demo:  demo@greencloud.local / demo123")
+        print("========================================\n")
 
 if __name__ == '__main__':
     init_database()
