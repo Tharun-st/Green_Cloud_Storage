@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Favorites - GreenCloud{% endblock %}
+
+{% block content %}
+<div class="favorites-page">
+    <div class="page-header">
+        <h1><i class="fas fa-star"></i> Favorite Files</h1>
+    </div>
+    
+    {% if files %}
+    <div class="grid">
+        {% for file in files %}
+        <div class="file-card">
+            <div class="file-preview">
+                <i class="fas {{ file.get_icon_class() }}"></i>
+            </div>
+            <div class="file-info">
+                <div class="file-name">{{ file.original_filename }}</div>
+                <div class="file-meta">{{ file.get_size_formatted() }}</div>
+            </div>
+            <div class="file-actions">
+                <a href="{{ url_for('files.preview', file_id=file.id) }}" class="btn-icon" title="Preview">
+                    <i class="fas fa-eye"></i>
+                </a>
+                <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn-icon" title="Download">
+                    <i class="fas fa-download"></i>
+                </a>
+                <button class="btn-icon copy-link-btn"
+                    data-url="{{ url_for('files.download', file_id=file.id, _external=True) }}"
+                    title="Copy download link">
+                    <i class="fas fa-link"></i>
+                </button>
+                <button class="btn-icon" onclick="toggleFavorite({{ file.id }})">
+                    <i class="fas fa-star favorited"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-star"></i>
+        <p>No favorite files yet</p>
+        <a href="{{ url_for('files.index') }}" class="btn btn-primary">Browse Files</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleFavorite(fileId) {
+    fetch(`/files/${fileId}/favorite`, {method: 'POST'})
+        .then(response => response.json())
+        .then(data => location.reload());
+}
+</script>
+{% endblock %}

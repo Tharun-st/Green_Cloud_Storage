@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - GreenCloud{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+            <p>System Overview & Management</p>
+        </div>
+        <div class="page-actions">
+            <a href="{{ url_for('auth.admin_users') }}" class="btn btn-primary">
+                <i class="fas fa-users-cog"></i> Users
+            </a>
+            <a href="{{ url_for('auth.admin_files') }}" class="btn btn-secondary">
+                <i class="fas fa-database"></i> All Files
+            </a>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_users }}</h3>
+                <p>Total Users</p>
+            </div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon green">
+                <i class="fas fa-file"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_files }}</h3>
+                <p>Total Files</p>
+            </div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon orange">
+                <i class="fas fa-hdd"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_storage }}</h3>
+                <p>Storage Used</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- GreenOps Summary -->
+        <div class="card">
+            <div class="card-header">
+                <h3>GreenOps Status</h3>
+                <a href="{{ url_for('greenops.dashboard') }}" class="btn btn-sm btn-link">View Details</a>
+            </div>
+            <div class="card-body">
+                <div class="system-resources">
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <i class="fas fa-bolt"></i> Global Energy Score
+                        </div>
+                        <div class="resource-value-text">
+                            A+ (98/100)
+                        </div>
+                        <div class="resource-bar">
+                            <div class="resource-fill success" style="width: 98%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> System running efficiently.
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity (All Files) -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Recent System Activity</h3>
+                <a href="{{ url_for('auth.admin_files') }}" class="btn btn-sm btn-link">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="file-list">
+                    {% for file in recent_files %}
+                    <div class="file-item">
+                        <div class="file-icon">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">{{ file.original_filename }}</div>
+                            <div class="file-meta">
+                                Uploaded by <strong>{{ file.owner.username }}</strong> • {{ file.get_size_formatted() }}
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn-icon"
+                                title="Download">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state" style="padding: 20px;">
+                        <p>No files uploaded yet.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

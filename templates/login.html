@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Login - GreenCloud{% endblock %}
+
+{% block extra_css %}
+<style>
+    body.login-theme {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1><i class="fas fa-cloud"></i> GreenCloud</h1>
+            <p>Personal Cloud Storage with AI & GreenOps</p>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <h2>Welcome Back</h2>
+
+            <div class="form-group">
+                <label for="email">
+                    <i class="fas fa-envelope"></i> Email
+                </label>
+                <input type="email" id="email" name="email" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="remember">
+                    Remember me
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+
+            <!-- Registration disabled as per requirements -->
+        </form>
+    </div>
+</div>
+{% endblock %}

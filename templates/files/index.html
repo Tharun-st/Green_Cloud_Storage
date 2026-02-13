@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}My Files - GreenCloud{% endblock %}
+
+{% block content %}
+<div class="files-page">
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-folder"></i> My Files</h1>
+            <!-- Breadcrumb -->
+            {% if breadcrumbs %}
+            <div class="breadcrumb">
+                <a href="{{ url_for('files.index') }}">Home</a>
+                {% for crumb in breadcrumbs %}
+                <span class="breadcrumb-sep">/</span>
+                <a href="{{ url_for('files.index', folder_id=crumb.id) }}">{{ crumb.name }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="page-actions">
+            <button class="btn btn-secondary" id="openCreateFolderModal">
+                <i class="fas fa-folders-plus"></i> New Folder
+            </button>
+            <button class="btn btn-primary" id="openUploadModal">
+                <i class="fas fa-upload"></i> Upload
+            </button>
+        </div>
+    </div>
+
+    <!-- Folders -->
+    {% if folders %}
+    <div class="section">
+        <h3><i class="fas fa-folder"></i> Folders</h3>
+        <div class="grid">
+            {% for folder in folders %}
+            <div class="folder-card" onclick="window.location='{{ url_for('files.index', folder_id=folder.id) }}'">
+                <div class="folder-icon">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <div class="folder-info">
+                    <div class="folder-name">
+                        {{ folder.name }}
+                    </div>
+                    <div class="folder-meta">{{ folder.get_file_count() }} files</div>
+                </div>
+                <div class="folder-actions" onclick="event.stopPropagation()">
+                    <button class="btn-icon rename-folder-btn" data-id="{{ folder.id }}" data-name="{{ folder.name }}"
+                        title="Rename">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <form method="POST" action="{{ url_for('folders.delete', folder_id=folder.id) }}"
+                        style="display:inline;" onsubmit="return confirm('Delete this folder?')">
+                        <button type="submit" class="btn-icon" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Files -->
+    <div class="section">
+        <h3><i class="fas fa-file"></i> Files</h3>
+        {% if files %}
+        <div class="grid">
+            {% for file in files %}
+            <div class="file-card">
+                <div class="file-preview">
+                    <i class="fas {{ file.get_icon_class() }}"></i>
+                </div>
+                <div class="file-info">
+                    <div class="file-name" title="{{ file.original_filename }}">{{ file.original_filename }}</div>
+                    <div class="file-meta">{{ file.get_size_formatted() }} • By {{ file.owner.username }}</div>
+                </div>
+                <div class="file-actions">
+                    <a href="{{ url_for('files.preview', file_id=file.id) }}" class="btn-icon" title="Preview">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn-icon" title="Download">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    <button class="btn-icon copy-link-btn"
+                        data-url="{{ url_for('files.download', file_id=file.id, _external=True) }}"
+                        title="Copy download link">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <button class="btn-icon toggle-favorite-btn" data-id="{{ file.id }}" title="Favorite">
+                        <i class="fas fa-star {% if file.is_favorite %}favorited{% endif %}"></i>
+                    </button>
+                    <form method="POST" action="{{ url_for('files.delete', file_id=file.id) }}" style="display:inline;"
+                        onsubmit="return confirm('Move to trash?')">
+                        <button type="submit" class="btn-icon" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-file"></i>
+            <p>No files in this folder</p>
+            <button class="btn btn-primary" id="openUploadModalEmpty">
+                <i class="fas fa-upload"></i> Upload Files
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-upload"></i> Upload Files</h2>
+            <button class="modal-close" data-modal="uploadModal">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('files.upload') }}" enctype="multipart/form-data">
+            <div class="modal-body">
+                <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder else '' }}">
+                <div class="form-group">
+                    <label>Select Files</label>
+                    <input type="file" name="file" required class="file-input">
+                    <p class="help-text">Max file size: 100MB</p>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="is_shared">
+                        Share with everyone
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal="uploadModal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Folder Modal -->
+<div id="createFolderModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-folder-plus"></i> Create Folder</h2>
+            <button class="modal-close" data-modal="createFolderModal">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('folders.create') }}">
+            <div class="modal-body">
+                <input type="hidden" name="parent_id" value="{{ current_folder.id if current_folder else '' }}">
+                <div class="form-group">
+                    <label>Folder Name</label>
+                    <input type="text" name="name" required autofocus>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal="createFolderModal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Modal Logic
+        const modals = {
+            'uploadModal': document.getElementById('uploadModal'),
+            'createFolderModal': document.getElementById('createFolderModal')
+        };
+
+        function openModal(modalId) {
+            if (modals[modalId]) modals[modalId].style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            if (modals[modalId]) modals[modalId].style.display = 'none';
+        }
+
+        // Open Buttons
+        const openUpload = document.getElementById('openUploadModal');
+        if (openUpload) openUpload.addEventListener('click', () => openModal('uploadModal'));
+
+        const openUploadEmpty = document.getElementById('openUploadModalEmpty');
+        if (openUploadEmpty) openUploadEmpty.addEventListener('click', () => openModal('uploadModal'));
+
+        const openCreateFolder = document.getElementById('openCreateFolderModal');
+        if (openCreateFolder) openCreateFolder.addEventListener('click', () => openModal('createFolderModal'));
+
+        // Close Buttons (both x and cancel)
+        document.querySelectorAll('.modal-close, .btn-secondary[data-modal]').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const modalId = this.dataset.modal || this.closest('.modal').id;
+                closeModal(modalId);
+            });
+        });
+
+        // Toggle Favorite
+        document.querySelectorAll('.toggle-favorite-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const fileId = this.dataset.id;
+                fetch(`/files/${fileId}/favorite`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => location.reload());
+            });
+        });
+
+        // Rename Folder
+        document.querySelectorAll('.rename-folder-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const folderId = this.dataset.id;
+                const currentName = this.dataset.name;
+                const newName = prompt('Enter new folder name:', currentName);
+
+                if (newName && newName !== currentName) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/folders/${folderId}/rename`;
+                    const input = document.createElement('input');
+                    input.name = 'new_name';
+                    input.value = newName;
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

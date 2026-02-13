@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}System Monitor - GreenCloud{% endblock %}
+
+{% block content %}
+<div class="system-monitor-page">
+    <div class="page-header">
+        <h1><i class="fas fa-server"></i> System Resource Monitor</h1>
+        <p>Real-time laptop resource monitoring for GreenOps</p>
+    </div>
+    
+    <!-- Energy Score Card -->
+    <div class="energy-score-card {{ summary.energy_level }}">
+        <div class="energy-icon">
+            {% if summary.energy_level == 'green' %}
+            <i class="fas fa-leaf"></i>
+            {% elif summary.energy_level == 'yellow' %}
+            <i class="fas fa-exclamation-triangle"></i>
+            {% else %}
+            <i class="fas fa-bolt"></i>
+            {% endif %}
+        </div>
+        <div class="energy-info">
+            <h2>Energy Score: {{ energy_score }}/100</h2>
+            <p>{{ summary.energy_message }}</p>
+            {% if summary.battery %}
+            <div class="battery-status">
+                <i class="fas fa-battery-{{ 'full' if summary.battery.percent > 75 else 'half' if summary.battery.percent > 25 else 'low' }}"></i>
+                Battery: {{ summary.battery.percent }}% 
+                {% if summary.battery.plugged %}(Charging){% else %}(On Battery){% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- System Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card {{ summary.cpu.status }}">
+            <div class="stat-icon">
+                <i class="fas fa-microchip"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ summary.cpu.percent }}%</h3>
+                <p>CPU Usage</p>
+                <div class="mini-progress">
+                    <div class="mini-progress-fill" style="width: {{ summary.cpu.percent }}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card {{ summary.memory.status }}">
+            <div class="stat-icon">
+                <i class="fas fa-memory"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ summary.memory.percent|round(1) }}%</h3>
+                <p>Memory Usage</p>
+                <div class="mini-progress">
+                    <div class="mini-progress-fill" style="width: {{ summary.memory.percent }}%"></div>
+                </div>
+                <small>{{ summary.memory.used_gb }} / {{ summary.memory.total_gb }} GB</small>
+            </div>
+        </div>
+        
+        <div class="stat-card {{ summary.disk.status }}">
+            <div class="stat-icon">
+                <i class="fas fa-hdd"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ summary.disk.percent|round(1) }}%</h3>
+                <p>Disk Usage</p>
+                <div class="mini-progress">
+                    <div class="mini-progress-fill" style="width: {{ summary.disk.percent }}%"></div>
+                </div>
+                <small>{{ summary.disk.free_gb }} GB Free</small>
+            </div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ summary.uptime.formatted }}</h3>
+                <p>Server Uptime</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alerts -->
+    {% if summary.alerts %}
+    <div class="card alert-card">
+        <div class="card-header">
+            <h3><i class="fas fa-exclamation-circle"></i> Resource Alerts</h3>
+        </div>
+        <div class="card-body">
+            {% for alert in summary.alerts %}
+            <div class="alert alert-{{ alert.type }}">
+                <i class="fas fa-exclamation-triangle"></i>
+                {{ alert.message }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Eco Recommendations -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-lightbulb"></i> Smart Eco Recommendations</h3>
+        </div>
+        <div class="card-body">
+            {% if recommendations %}
+            <div class="recommendations-list">
+                {% for rec in recommendations %}
+                <div class="recommendation-item priority-{{ rec.priority }}">
+                    <i class="fas {{ rec.icon }}"></i>
+                    <div class="rec-content">
+                        <strong>{{ rec.message }}</strong>
+                        {% if rec.action == 'eco_mode' %}
+                        <button class="btn btn-sm btn-success" onclick="toggleEcoMode()">Enable Eco Mode</button>
+                        {% elif rec.action == 'cleanup' %}
+                        <a href="{{ url_for('files.trash') }}" class="btn btn-sm btn-primary">Go to Cleanup</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                <p>No recommendations - Your system is running efficiently!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Auto-refresh notice -->
+    <div class="refresh-notice">
+        <i class="fas fa-sync-alt"></i> Page refreshes every 10 seconds for real-time monitoring
+    </div>
+</div>
+
+<script>
+// Auto-refresh every 10 seconds
+setTimeout(function() {
+    location.reload();
+}, 10000);
+
+function toggleEcoMode() {
+    fetch('/greenops/eco-mode', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => {
+            alert('Eco Mode ' + (data.eco_mode ? 'enabled' : 'disabled'));
+            location.reload();
+        });
+}
+</script>
+{% endblock %}

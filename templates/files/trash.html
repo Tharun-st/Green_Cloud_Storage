@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Trash - GreenCloud{% endblock %}
+
+{% block content %}
+<div class="trash-page">
+    <div class="page-header">
+        <h1><i class="fas fa-trash"></i> Trash</h1>
+        <p>Files in trash are automatically deleted after 30 days</p>
+    </div>
+    
+    {% if files %}
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Size</th>
+                    <th>Deleted</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr>
+                    <td>
+                        <i class="fas {{ file.get_icon_class() }}"></i>
+                        {{ file.original_filename }}
+                    </td>
+                    <td>{{ file.get_size_formatted() }}</td>
+                    <td>{{ file.deleted_at.strftime('%b %d, %Y') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('files.restore', file_id=file.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="fas fa-undo"></i> Restore
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('files.delete_permanent', file_id=file.id) }}" style="display:inline;" onsubmit="return confirm('Permanently delete this file?')">
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fas fa-times"></i> Delete Forever
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-trash"></i>
+        <p>Trash is empty</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

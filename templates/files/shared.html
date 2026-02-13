@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Shared Files - GreenCloud{% endblock %}
+
+{% block content %}
+<div class="files-page">
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-share-alt"></i> Shared Files</h1>
+            <p>Files shared by the community</p>
+        </div>
+    </div>
+
+    <!-- Files -->
+    <div class="section">
+        {% if files %}
+        <div class="grid">
+            {% for file in files %}
+            <div class="file-card">
+                <div class="file-preview">
+                    <i class="fas {{ file.get_icon_class() }}"></i>
+                </div>
+                <div class="file-info">
+                    <div class="file-name" title="{{ file.original_filename }}">{{ file.original_filename }}</div>
+                    <div class="file-meta">{{ file.get_size_formatted() }} • Shared by {{ file.owner.username }}</div>
+                    <div class="file-meta">on {{ file.created_at.strftime('%Y-%m-%d') }}</div>
+                </div>
+                <div class="file-actions">
+                    <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn-icon" title="Download">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    {% if current_user.id == file.user_id %}
+                    <form method="POST" action="{{ url_for('files.delete', file_id=file.id) }}" style="display:inline;"
+                        onsubmit="return confirm('Move to trash?')">
+                        <button type="submit" class="btn-icon" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-share-alt"></i>
+            <p>No shared files yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

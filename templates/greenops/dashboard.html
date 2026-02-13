@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}GreenOps Dashboard - GreenCloud{% endblock %}
+
+{% block content %}
+<div class="greenops-page">
+    <div class="page-header">
+        <h1><i class="fas fa-leaf"></i> GreenOps Dashboard</h1>
+        <p>Sustainable cloud storage management</p>
+    </div>
+    
+    <!-- GreenOps Score -->
+    <div class="greenops-score-card">
+        <div class="score-circle">
+            <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" class="score-bg"></circle>
+                <circle cx="50" cy="50" r="45" class="score-fill" 
+                        style="stroke-dashoffset: calc(283 - (283 * {{ stats.score }}) / 100)"></circle>
+            </svg>
+            <div class="score-text">
+                <span class="score-number">{{ stats.score }}</span>
+                <span class="score-label">/100</span>
+            </div>
+        </div>
+        <div class="score-info">
+            <h2>Your GreenOps Score</h2>
+            <p>
+                {% if stats.score >= 80 %}
+                🌟 Excellent! You're a green computing champion!
+                {% elif stats.score >= 60 %}
+                👍 Good job! Keep optimizing for better results.
+                {% else %}
+                💡 Let's improve! Follow the suggestions below.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h4>Storage Optimization</h4>
+            <div class="stat-value">{{ stats.storage_optimization.total_files }}</div>
+            <div class="stat-label">Active Files</div>
+        </div>
+        <div class="stat-card">
+            <h4>Trash Management</h4>
+            <div class="stat-value">{{ stats.storage_optimization.trash_files }}</div>
+            <div class="stat-label">Files in Trash</div>
+        </div>
+        <div class="stat-card">
+            <h4>Duplicates Found</h4>
+            <div class="stat-value">{{ stats.storage_optimization.duplicate_groups }}</div>
+            <div class="stat-label">Duplicate Groups</div>
+        </div>
+        <div class="stat-card">
+            <h4>Potential Savings</h4>
+            <div class="stat-value">{{ (stats.storage_optimization.potential_savings / (1024**2))|round(1) }} MB</div>
+            <div class="stat-label">Can Be Freed</div>
+        </div>
+    </div>
+    
+    <!-- Optimization Suggestions -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-lightbulb"></i> Optimization Suggestions</h3>
+        </div>
+        <div class="card-body">
+            {% if stats.suggestions %}
+            <div class="suggestions-list">
+                {% for suggestion in stats.suggestions %}
+                <div class="suggestion-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ suggestion }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                <p>Great! Your storage is fully optimized.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="dashboard-grid">
+        <!-- Duplicate Files -->
+        {% if stats.duplicate_files %}
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-copy"></i> Duplicate Files</h3>
+            </div>
+            <div class="card-body">
+                {% for dup in stats.duplicate_files[:5] %}
+                <div class="duplicate-group">
+                    <div class="duplicate-info">
+                        <strong>{{ dup.count }} copies</strong>
+                        <span>{{ (dup.size / (1024**2))|round(2) }} MB total</span>
+                    </div>
+                    <div class="duplicate-files">
+                        {% for file in dup.files %}
+                        <div class="file-name">• {{ file.name }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Old Files -->
+        {% if stats.old_files %}
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-clock"></i> Old Files</h3>
+            </div>
+            <div class="card-body">
+                <p>{{ stats.old_files|length }} files not accessed in 6+ months</p>
+                <div class="old-files-list">
+                    {% for file in stats.old_files[:5] %}
+                    <div class="old-file-item">
+                        <i class="fas {{ file.get_icon_class() }}"></i>
+                        <span>{{ file.original_filename }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="greenops-actions">
+        <button class="action-btn" onclick="optimizeStorage('trash')">
+            <i class="fas fa-broom"></i>
+            <span>Clean Trash</span>
+        </button>
+        <button class="action-btn" onclick="optimizeStorage('storage')">
+            <i class="fas fa-sync"></i>
+            <span>Recalculate Storage</span>
+        </button>
+        <button class="action-btn" onclick="toggleEcoMode()">
+            <i class="fas fa-leaf"></i>
+            <span>Toggle Eco Mode</span>
+        </button>
+    </div>
+</div>
+
+<script>
+function optimizeStorage(type) {
+    fetch('/greenops/optimize', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({type: type})
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert('Optimization complete!');
+        location.reload();
+    });
+}
+
+function toggleEcoMode() {
+    fetch('/greenops/eco-mode', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => location.reload());
+}
+</script>
+{% endblock %}

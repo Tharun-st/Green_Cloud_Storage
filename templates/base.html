@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GreenCloud Storage{% endblock %}</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body
+    class="{% if current_user.is_authenticated %}{% if current_user.is_admin %}admin-theme{% else %}user-theme{% endif %}{% if current_user.eco_mode_enabled %} eco-mode{% endif %}{% else %}login-theme{% endif %}">
+
+    {% if current_user.is_authenticated %}
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-cloud"></i> GreenCloud</h2>
+            {% if current_user.is_admin %}
+            <span class="admin-badge">Admin</span>
+            {% else %}
+            <span class="eco-badge" title="Eco Mode Active">🌱</span>
+            {% endif %}
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('files.index') }}" class="nav-item">
+                <i class="fas fa-folder"></i>
+                <span>My Files</span>
+            </a>
+            <a href="{{ url_for('files.favorites') }}" class="nav-item">
+                <i class="fas fa-star"></i>
+                <span>Favorites</span>
+            </a>
+            <a href="{{ url_for('files.shared') }}" class="nav-item">
+                <i class="fas fa-share-alt"></i>
+                <span>Shared Files</span>
+            </a>
+            <a href="{{ url_for('files.trash') }}" class="nav-item">
+                <i class="fas fa-trash"></i>
+                <span>Trash</span>
+            </a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('greenops.dashboard') }}" class="nav-item greenops">
+                <i class="fas fa-leaf"></i>
+                <span>GreenOps</span>
+            </a>
+            {% endif %}
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('system.monitor_dashboard') }}" class="nav-item">
+                <i class="fas fa-server"></i>
+                <span>System Monitor</span>
+            </a>
+            {% endif %}
+            {% if current_user.is_admin %}
+            <div class="nav-divider"></div>
+            <div class="nav-label">ADMIN</div>
+            <a href="{{ url_for('auth.admin_users') }}" class="nav-item">
+                <i class="fas fa-users-cog"></i>
+                <span>Users</span>
+            </a>
+            <a href="{{ url_for('auth.admin_files') }}" class="nav-item">
+                <i class="fas fa-database"></i>
+                <span>All Files</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('auth.profile') }}" class="nav-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="storage-info">
+                <div class="storage-label">Storage</div>
+                <div class="storage-bar">
+                    <div class="storage-fill" data-width="{{ current_user.get_storage_percentage() }}"></div>
+                </div>
+                <div class="storage-text">
+                    {{ (current_user.storage_used / (1024**3))|round(2) }} GB / {{ (current_user.storage_quota /
+                    (1024**3))|round(0) }} GB
+                </div>
+            </div>
+
+            <a href="{{ url_for('auth.logout') }}" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="main-content {% if not current_user.is_authenticated %}full-width{% endif %}">
+
+        {% if current_user.is_authenticated %}
+        <!-- Top Bar -->
+        <div class="topbar">
+            <button class="btn-menu" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="topbar-search">
+                <form action="{{ url_for('files.index') }}" method="get">
+                    <input type="text" name="search" placeholder="Search files..." class="search-input">
+                    <button type="submit" class="btn-search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+
+            <div class="topbar-actions">
+                <div class="user-info">
+                    <span class="user-name">{{ current_user.username }}</span>
+                    {% if current_user.is_admin %}
+                    <span class="admin-badge" style="margin-left: 8px; font-size: 10px;">ADMIN</span>
+                    {% endif %}
+                    <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                <i
+                    class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'error' else 'info-circle' }}"></i>
+                {{ message }}
+                <button class="alert-close">&times;</button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Page Content -->
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    {% if current_user.is_authenticated and AI_AGENT_ENABLED %}
+    <!-- AI Agent Button -->
+    <button class="ai-agent-btn" id="aiAgentBtn" title="AI Assistant">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <!-- AI Agent Chat -->
+    <div class="ai-chat" id="aiChat">
+        <div class="ai-chat-header">
+            <div>
+                <i class="fas fa-robot"></i>
+                <span>{{ AI_AGENT_NAME }}</span>
+            </div>
+            <button class="ai-chat-close" id="aiChatClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="ai-chat-messages" id="aiChatMessages">
+            <div class="ai-message">
+                <div class="ai-avatar">🤖</div>
+                <div class="ai-text">
+                    Hi! I'm {{ AI_AGENT_NAME }}, your GreenCloud assistant. How can I help you today?
+                </div>
+            </div>
+        </div>
+
+        <div class="ai-chat-input">
+            <input type="text" id="aiInput" placeholder="Ask me anything...">
+            <button id="aiSend">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% if current_user.is_authenticated and AI_AGENT_ENABLED %}
+    <script src="{{ url_for('static', filename='js/ai-agent.js') }}"></script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Apply widths from data attributes to fix linting issues with inline styles
+            document.querySelectorAll('[data-width]').forEach(el => {
+                el.style.width = el.dataset.width + '%';
+            });
+        });
+    </script>
+</body>
+
+</html>
