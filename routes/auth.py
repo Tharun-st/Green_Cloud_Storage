@@ -32,6 +32,15 @@ def login():
         
         user = User.query.filter_by(email=email).first()
         
+        # Debug logging (only in development)
+        import os
+        if os.environ.get('FLASK_ENV') != 'production':
+            print(f"Login attempt - Email: {email}")
+            print(f"User found: {user is not None}")
+            if user:
+                print(f"Password check: {user.check_password(password)}")
+                print(f"User active: {user.is_active}")
+        
         if user and user.check_password(password):
             if not user.is_active:
                 flash('Your account has been deactivated. Please contact admin.', 'error')
@@ -49,7 +58,10 @@ def login():
                 return redirect(next_page) if next_page else redirect(url_for('auth.admin_users'))
             return redirect(next_page) if next_page else redirect(url_for('dashboard'))
         else:
-            flash('Invalid email or password.', 'error')
+            if not user:
+                flash('No account found with that email address.', 'error')
+            else:
+                flash('Invalid password.', 'error')
     
     return render_template('login.html')
 
