@@ -1,5 +1,18 @@
 // GreenCloud - Main JavaScript
 
+// Register Service Worker for offline support
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/js/service-worker.js')
+            .then(registration => {
+                console.log('Service Worker registered:', registration);
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // ===== Mobile Menu Toggle =====
@@ -274,4 +287,102 @@ function confirmAction(message, callback) {
     if (confirm(message)) {
         callback();
     }
+}
+
+// Handle file upload with offline support
+function handleFileUpload(e) {
+    e.preventDefault();
+    
+    const fileInput = e.target.querySelector('input[type="file"]');
+    
+    if (!fileInput || !fileInput.files.length) {
+        showNotification('Please select a file', 'error');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const folderId = e.target.querySelector('select[name="folder_id"]')?.value || null;
+    
+    // Check if offline
+    if (!navigator.onLine && typeof offlineManager !== 'undefined') {
+        // Add to offline queue
+        offlineManager.addToQueue(file, folderId)
+            .then(() => {
+                showNotification(`File "${file.name}" queued for upload when online`, 'info');
+                fileInput.value = '';
+                e.target.closest('.modal')?.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error queuing file:', error);
+                showNotification('Failed to queue file for offline upload', 'error');
+            });
+        return;
+    }
+    
+    // Online upload
+    const formData = new FormData(e.target);
+    
+    // Show upload progress
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn?.innerHTML;
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    }
+    
+    fetch('/files/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok && !navigator.onLine && typeof offlineManager !== 'undefined') {
+            // Network error while uploading, add to queue
+            return offlineManager.addToQueue(file, folderId)
+                .then(() => {
+                    showNotification(`Connection lost. File "${file.name}" queued for upload`, 'info');
+                    fileInput.value = '';
+                    e.target.closest('.modal')?.style.display = 'none';
+                    return { queued: true };
+                });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.queued) {
+            // Already handled
+        } else if (data.success) {
+            showNotification('File uploaded successfully!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message || 'Upload failed', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        // Try to queue if offline manager is available
+        if (!navigator.onLine && typeof offlineManager !== 'undefined') {
+            offlineManager.addToQueue(file, folderId)
+                .then(() => {
+                    showNotification(`Connection lost. File "${file.name}" queued for upload`, 'info');
+                    fileInput.value = '';
+                    e.target.closest('.modal')?.style.display = 'none';
+                })
+                .catch(() => {
+                    showNotification('Upload failed. Please try again.', 'error');
+                });
+        } else {
+            showNotification('Upload failed. Please try again.', 'error');
+        }
+    })
+    .finally(() => {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    });
+}
+
+// Show alert (alias for showNotification)
+function showAlert(message, type) {
+    showNotification(message, type);
 }

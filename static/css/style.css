@@ -53,6 +53,52 @@ body.login-theme {
     --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+/* ===== Connection Status Indicator ===== */
+#connection-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+#connection-status i {
+    margin-right: 5px;
+}
+
+.status-online {
+    background: #27ae60;
+    color: white;
+}
+
+.status-offline {
+    background: #e74c3c;
+    color: white;
+}
+
+.status-syncing {
+    background: #3498db;
+    color: white;
+}
+
+#queue-status {
+    position: fixed;
+    top: 50px;
+    right: 10px;
+    background: #f39c12;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
 /* ===== Global Styles ===== */
 * {
     margin: 0;
@@ -1623,6 +1669,22 @@ body.admin-theme .nav-divider {
 
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
+    /* Adjust connection status for mobile */
+    #connection-status {
+        top: auto;
+        bottom: 70px;
+        right: 10px;
+        font-size: 11px;
+        padding: 6px 12px;
+    }
+    
+    #queue-status {
+        top: auto;
+        bottom: 110px;
+        right: 10px;
+        font-size: 11px;
+    }
+    
     .sidebar {
         transform: translateX(-100%);
     }

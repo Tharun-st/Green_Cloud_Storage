@@ -18,6 +18,14 @@
 <body
     class="{% if current_user.is_authenticated %}{% if current_user.is_admin %}admin-theme{% else %}user-theme{% endif %}{% if current_user.eco_mode_enabled %} eco-mode{% endif %}{% else %}login-theme{% endif %}">
 
+    <!-- Connection Status Indicator -->
+    <div id="connection-status" class="status-online">
+        <i class="fas fa-wifi"></i> Online
+    </div>
+    <div id="queue-status" style="display: none;">
+        <span id="queue-count"></span>
+    </div>
+
     {% if current_user.is_authenticated %}
     <!-- Sidebar Navigation -->
     <div class="sidebar" id="sidebar">
@@ -194,6 +202,9 @@
     {% if current_user.is_authenticated and AI_AGENT_ENABLED %}
     <script src="{{ url_for('static', filename='js/ai-agent.js') }}"></script>
     {% endif %}
+
+    <!-- Offline Support Scripts -->
+    <script src="{{ url_for('static', filename='js/offline-manager.js') }}"></script>
 
     {% block extra_js %}{% endblock %}
     <script>
